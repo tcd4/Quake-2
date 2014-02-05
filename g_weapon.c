@@ -598,7 +598,39 @@ void rocket_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 	G_FreeEdict (ent);
 }
 
-void fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage)
+void rocket_think (edict_t *self)
+{
+	vec3_t	point;
+	int		damage;
+	float	damage_radius;
+	int		radius_damage;
+
+
+	if (self->count <= 0)
+	{
+		self->count = 0 ;
+
+		damage = 100 + (int)(random() * 20.0);
+		radius_damage = 120;
+		damage_radius = 120;
+		
+		point[0] = random()*10000 - 5000;
+		point[1] = random()*10000 - 5000; 
+		point[2] = random()*10000 - 5000;
+		
+		VectorNormalize(point) ;
+
+		fire_rocket (self, self->s.origin, point, damage, 1000, damage_radius, radius_damage, 0);	
+	}
+	else
+		self->count -= 100 ;
+
+	VectorScale (self->movedir, self->count, self->velocity) ;
+	self->nextthink = level.time + .01;
+	self->think = rocket_think ;
+}
+
+void fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage, int primary)
 {
 	edict_t	*rocket;
 
@@ -616,8 +648,20 @@ void fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed
 	rocket->s.modelindex = gi.modelindex ("models/objects/rocket/tris.md2");
 	rocket->owner = self;
 	rocket->touch = rocket_touch;
-	rocket->nextthink = level.time + 8000/speed;
-	rocket->think = G_FreeEdict;
+
+	if (primary)
+	{
+		rocket->count = speed;
+		rocket->nextthink = level.time + .01;
+		rocket->think = rocket_think;
+	}
+	else
+	{
+		speed = 650 ;
+		rocket->nextthink = level.time + 8000/speed ;
+		rocket->think ;
+	}
+
 	rocket->dmg = damage;
 	rocket->radius_dmg = radius_damage;
 	rocket->dmg_radius = damage_radius;
