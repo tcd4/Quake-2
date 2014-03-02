@@ -715,7 +715,7 @@ void fire_grenade2 (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int 
 void fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage);
 void fire_rail (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
 void fire_bfg (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius);
-
+void fire_melee (edict_t *self, vec3_t start, vec3_t dir, int damage, int range, int kick, int mod);
 //
 // g_ptrail.c
 //
@@ -842,6 +842,8 @@ typedef struct
 
 	int			game_helpchanged;
 	int			helpchanged;
+
+	int			blocking;
 
 	qboolean	spectator;			// client is a spectator
 } client_persistant_t;
@@ -1067,6 +1069,9 @@ struct edict_s
 	int			noise_index2;
 	float		volume;
 	float		attenuation;
+
+	//mod variables
+	qboolean	blocking;
 
 	// timing variables
 	float		wait;

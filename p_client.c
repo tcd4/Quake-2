@@ -1695,7 +1695,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	ent->light_level = ucmd->lightlevel;
 
 	// fire weapon from final position if needed
-	if (client->latched_buttons & BUTTON_ATTACK)
+	if ((!ent->blocking) && client->latched_buttons & BUTTON_ATTACK)
 	{
 		if (client->resp.spectator) {
 

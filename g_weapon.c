@@ -104,6 +104,9 @@ qboolean fire_hit (edict_t *self, vec3_t aim, int damage, int kick)
 	return true;
 }
 
+void fire_melee (edict_t *self, vec3_t start, vec3_t dir, int damage, int range, int kick, int mod)
+{
+}
 
 /*
 =================
