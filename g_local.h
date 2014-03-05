@@ -479,6 +479,7 @@ extern	int	body_armor_index;
 #define MOD_TRIGGER_HURT	31
 #define MOD_HIT				32
 #define MOD_TARGET_BLASTER	33
+#define MOD_POISON			34
 #define MOD_FRIENDLY_FIRE	0x8000000
 
 extern	int	meansOfDeath;
@@ -1072,6 +1073,11 @@ struct edict_s
 
 	//mod variables
 	qboolean	blocking;
+	int			poison_time;
+	int			stun_time;
+	int			ensnare_time;
+	int			disarm_time;
+	edict_t		*poisoner;
 
 	// timing variables
 	float		wait;

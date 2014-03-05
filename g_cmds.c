@@ -772,10 +772,10 @@ void Cmd_Block (edict_t *ent)
 	//check if the ent is a player
 	if ((!ent) || (!ent->client))
 	{
-		return ;
+		return;
 	}
 
-	ent->blocking = !ent->blocking ;
+	ent->blocking = !ent->blocking;
 }
 
 /*

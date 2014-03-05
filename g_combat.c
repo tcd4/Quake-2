@@ -464,7 +464,7 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 	if (!(dflags & DAMAGE_NO_PROTECTION) && CheckTeamDamage (targ, attacker))
 		return;
 
-// do the damage
+	// do the damage
 	if (take)
 	{
 		if ((targ->svflags & SVF_MONSTER) || (client))

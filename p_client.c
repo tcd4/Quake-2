@@ -1,6 +1,8 @@
 #include "g_local.h"
 #include "m_player.h"
 
+int	poison_cd = 10;
+
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
 
 void SP_misc_teleporter_dest (edict_t *ent);
@@ -364,6 +366,9 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				message = "tried to invade";
 				message2 = "'s personal space";
 				break;
+			case MOD_POISON:
+				message = "felt";
+				message2 = "'s sting";
 			}
 			if (message)
 			{
@@ -1564,6 +1569,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	edict_t	*other;
 	int		i, j;
 	pmove_t	pm;
+	vec3_t forward;
 
 	level.current_entity = ent;
 	client = ent->client;
@@ -1694,8 +1700,71 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	// monster sighting AI
 	ent->light_level = ucmd->lightlevel;
 
+	//poison status effect
+	if (ent->poison_time > 0)
+	{
+		if (poison_cd > 0)
+		{
+			poison_cd--;
+		}
+		else
+		{
+			T_Damage (ent->poisoner, ent, ent, NULL, NULL, NULL, 5, NULL, DAMAGE_NO_ARMOR | DAMAGE_NO_KNOCKBACK, MOD_POISON);
+
+			AngleVectors (ent->client->v_angle, forward, NULL, NULL);
+
+			gi.WriteByte (svc_temp_entity);
+			gi.WriteByte (TE_GREENBLOOD);
+			gi.WriteByte (8);
+			gi.WritePosition (ent->s.origin);
+			gi.WriteDir (forward);
+			gi.multicast (ent->s.origin, MULTICAST_PVS);
+
+			poison_cd = 10;
+		}
+
+		ent->poison_time--;
+	}
+
+	//stun status effect
+	if (ent->stun_time > 0)
+	{
+		ent->blocking = false;
+		client->latched_buttons = 0;
+		VectorSet (ent->velocity, 0, 0, 0);
+
+		ent->stun_time--;
+	}
+
+	//ensnare status effect
+	if (ent->ensnare_time > 0)
+	{
+		VectorSet (ent->velocity, 0, 0, 0);
+
+		ent->ensnare_time--;
+	}
+
+	//disarm status effect
+	if (ent->disarm_time > 0)
+	{
+		client->latched_buttons &= ~BUTTON_ATTACK;
+
+		ent->disarm_time--;
+	}
+
+	//check if a player is blocking
+	if (ent->blocking)
+	{
+		client->latched_buttons &= ~BUTTON_ATTACK;
+		gi.centerprintf(ent, "Blocking");
+	}
+	else
+	{
+		gi.centerprintf(ent, "");
+	}
+
 	// fire weapon from final position if needed
-	if ((!ent->blocking) && client->latched_buttons & BUTTON_ATTACK)
+	if (client->latched_buttons & BUTTON_ATTACK)
 	{
 		if (client->resp.spectator) {
 
@@ -1732,6 +1801,8 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		if (other->inuse && other->client->chase_target == ent)
 			UpdateChaseCam(other);
 	}
+
+	
 }
 
 
