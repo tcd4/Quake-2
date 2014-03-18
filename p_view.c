@@ -270,6 +270,10 @@ void SV_CalcViewOffset (edict_t *ent)
 		angles[ROLL] += delta;
 	}
 
+	angles[PITCH] += (crandom () * ent->shake_time);
+	angles[ROLL] += (crandom () * ent->shake_time);
+	angles[YAW] += (crandom () * ent->shake_time);
+
 //===================================
 
 	// base origin

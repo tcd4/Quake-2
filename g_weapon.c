@@ -179,7 +179,7 @@ void fire_melee (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int ran
 		{
 			if (tr.ent->takedamage)
 			{
-				T_Damage (tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, DAMAGE_BULLET, mod);
+				T_Damage (tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, DAMAGE_BULLET, mod);				
 			}
 			else
 			{
@@ -476,7 +476,9 @@ static void Grenade_Explode (edict_t *ent)
 	int			mod;
 
 	if (ent->owner->client)
+	{
 		PlayerNoise(ent->owner, ent->s.origin, PNOISE_IMPACT);
+	}
 
 	//FIXME: if we are onground then raise our Z just a bit since we are a point?
 	if (ent->enemy)
@@ -490,10 +492,16 @@ static void Grenade_Explode (edict_t *ent)
 		VectorSubtract (ent->s.origin, v, v);
 		points = ent->dmg - 0.5 * VectorLength (v);
 		VectorSubtract (ent->enemy->s.origin, ent->s.origin, dir);
+
 		if (ent->spawnflags & 1)
+		{
 			mod = MOD_HANDGRENADE;
+		}
 		else
-			mod = MOD_GRENADE;
+		{
+			mod = MOD_GRENADE;	
+		}
+
 		T_Damage (ent->enemy, ent, ent->owner, dir, ent->s.origin, vec3_origin, (int)points, (int)points, DAMAGE_RADIUS, mod);
 	}
 
@@ -503,7 +511,6 @@ static void Grenade_Explode (edict_t *ent)
 		mod = MOD_HG_SPLASH;
 	else
 		mod = MOD_G_SPLASH;
-	T_RadiusDamage(ent, ent->owner, ent->dmg, ent->enemy, ent->dmg_radius, mod);
 
 	VectorMA (ent->s.origin, -0.02, ent->velocity, origin);
 	gi.WriteByte (svc_temp_entity);

@@ -363,6 +363,9 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 	int			asave;
 	int			psave;
 	int			te_sparks;
+	vec3_t		bullet_angle;
+	int			min, max;
+	int			full_angle;
 
 	if (!targ->takedamage)
 		return;
@@ -399,34 +402,12 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 
 	VectorNormalize(dir);
 
-// bonus damage for suprising a monster
+	// bonus damage for suprising a monster
 	if (!(dflags & DAMAGE_RADIUS) && (targ->svflags & SVF_MONSTER) && (attacker->client) && (!targ->enemy) && (targ->health > 0))
 		damage *= 2;
 
 	if (targ->flags & FL_NO_KNOCKBACK)
 		knockback = 0;
-
-// figure momentum add
-	if (!(dflags & DAMAGE_NO_KNOCKBACK))
-	{
-		if ((knockback) && (targ->movetype != MOVETYPE_NONE) && (targ->movetype != MOVETYPE_BOUNCE) && (targ->movetype != MOVETYPE_PUSH) && (targ->movetype != MOVETYPE_STOP))
-		{
-			vec3_t	kvel;
-			float	mass;
-
-			if (targ->mass < 50)
-				mass = 50;
-			else
-				mass = targ->mass;
-
-			if (targ->client  && attacker == targ)
-				VectorScale (dir, 1600.0 * (float)knockback / mass, kvel);	// the rocket jump hack...
-			else
-				VectorScale (dir, 500.0 * (float)knockback / mass, kvel);
-
-			VectorAdd (targ->velocity, kvel, targ->velocity);
-		}
-	}
 
 	take = damage;
 	save = 0;
@@ -472,15 +453,103 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 		else
 			SpawnDamage (te_sparks, point, normal, take);
 
-
-		targ->health = targ->health - take;
+		if (targ->blocking)
+		{
+			vectoangles (dir, bullet_angle);
 			
+			full_angle = bullet_angle[1];
+			if (full_angle < 0)
+			{
+				full_angle = 360 + full_angle;
+			}
+
+			min = targ->client->v_angle[1];
+			if (min < 0)
+			{
+				min = 360 + min;
+			}
+			min -= 90;
+
+			max = min + 180;
+
+			if ( (full_angle > min) && (full_angle < max) )
+			{
+				targ->health -= take;
+			}
+			else if (mod &= MOD_ROCKET)
+			{
+				targ->blocking = false;
+				knockback += 300;
+			}
+			else if (mod &= MOD_SHOTGUN)
+			{
+				knockback = 0;
+			}
+		}
+		else
+		{
+			targ->health -= take;
+		}
+
 		if (targ->health <= 0)
 		{
 			if ((targ->svflags & SVF_MONSTER) || (client))
 				targ->flags |= FL_NO_KNOCKBACK;
 			Killed (targ, inflictor, attacker, take, point);
 			return;
+		}
+	}
+
+	//status effects
+	switch (mod)
+	{
+		case MOD_MACHINEGUN:
+			targ->poison_time = 750;
+			break;
+		case MOD_CHAINGUN:		
+			targ->poison_time += 750;
+			break;
+		case MOD_BFG_LASER:
+			VectorCopy (targ->s.origin, targ->previous_pos);
+			targ->shock_time += 250;
+			break;
+		case MOD_HANDGRENADE:
+			VectorCopy (targ->s.origin, targ->previous_pos);
+			targ->ensnare_time = 500;
+			break;
+		case MOD_GRENADE:
+			VectorCopy (targ->s.origin, targ->previous_pos);
+			targ->ensnare_time = 500;
+			break;
+		case MOD_SHOTGUN:
+			targ->blocking = false;
+			targ->shake_time = 200;
+			break;
+		case MOD_SSHOTGUN:
+			targ->blocking = false;
+			targ->shake_time += 500;
+			break;
+	}
+
+	// figure momentum add
+	if (!(dflags & DAMAGE_NO_KNOCKBACK))
+	{
+		if ((knockback) && (targ->movetype != MOVETYPE_NONE) && (targ->movetype != MOVETYPE_BOUNCE) && (targ->movetype != MOVETYPE_PUSH) && (targ->movetype != MOVETYPE_STOP))
+		{
+			vec3_t	kvel;
+			float	mass;
+
+			if (targ->mass < 50)
+				mass = 50;
+			else
+				mass = targ->mass;
+
+			if (targ->client  && attacker == targ)
+				VectorScale (dir, 1600.0 * (float)knockback / mass, kvel);	// the rocket jump hack...
+			else
+				VectorScale (dir, 500.0 * (float)knockback / mass, kvel);
+
+			VectorAdd (targ->velocity, kvel, targ->velocity);
 		}
 	}
 

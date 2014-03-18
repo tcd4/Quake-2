@@ -1,7 +1,9 @@
 #include "g_local.h"
 #include "m_player.h"
 
-int	poison_cd = 10;
+int	poison_cd = 0;
+int	shock_cd = 0;
+vec3_t point;
 
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
 
@@ -369,6 +371,11 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 			case MOD_POISON:
 				message = "felt";
 				message2 = "'s sting";
+				break;
+			case MOD_SHOCK:
+				message = "brightened";
+				message2 = "'s world";
+				break;
 			}
 			if (message)
 			{
@@ -599,7 +606,6 @@ void InitClientPersistant (gclient_t *client)
 	item = FindItem("Blaster");
 	client->pers.selected_item = ITEM_INDEX(item);
 	client->pers.inventory[client->pers.selected_item] = 1;
-
 	client->pers.weapon = item;
 
 	client->pers.health			= 100;
@@ -1090,6 +1096,12 @@ void PutClientInServer (edict_t *ent)
 	int		i;
 	client_persistant_t	saved;
 	client_respawn_t	resp;
+
+	//initializing status effects
+	ent->poison_time = 0;
+	ent->shock_time = 0;
+	ent->shake_time = 0;
+	ent->ensnare_time = 0;
 
 	// find a spawn point
 	// do it before setting health back up, so farthest
@@ -1700,6 +1712,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	// monster sighting AI
 	ent->light_level = ucmd->lightlevel;
 
+	
 	//poison status effect
 	if (ent->poison_time > 0)
 	{
@@ -1709,53 +1722,93 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		}
 		else
 		{
-			T_Damage (ent->poisoner, ent, ent, NULL, NULL, NULL, 5, NULL, DAMAGE_NO_ARMOR | DAMAGE_NO_KNOCKBACK, MOD_POISON);
+			ent->health--;
 
-			AngleVectors (ent->client->v_angle, forward, NULL, NULL);
+			if (ent->health <= 0)
+			{
+				meansOfDeath = MOD_POISON;
+				Killed (ent, ent->poisoner, ent->poisoner, true, ent->s.origin);
+			}
+
+			point[0] = random()*10000 - 5000;
+			point[1] = random()*10000 - 5000; 
+			point[2] = random()*10000 - 5000;
+
+			VectorNormalize(point) ;
 
 			gi.WriteByte (svc_temp_entity);
 			gi.WriteByte (TE_GREENBLOOD);
-			gi.WriteByte (8);
 			gi.WritePosition (ent->s.origin);
-			gi.WriteDir (forward);
+			gi.WriteDir (point);
 			gi.multicast (ent->s.origin, MULTICAST_PVS);
 
-			poison_cd = 10;
+			poison_cd = 20;
 		}
 
 		ent->poison_time--;
 	}
 
-	//stun status effect
-	if (ent->stun_time > 0)
+	//shock status effect
+	if (ent->shock_time > 0)
 	{
-		ent->blocking = false;
-		client->latched_buttons = 0;
-		VectorSet (ent->velocity, 0, 0, 0);
+		if (shock_cd > 0)
+		{
+			shock_cd--;
+		}
+		else
+		{
+			if (!VectorCompare(ent->s.origin, ent->previous_pos))
+			{
+				ent->health -= 1;
 
-		ent->stun_time--;
+				if (ent->health <= 0)
+				{
+					meansOfDeath = MOD_SHOCK;
+					Killed (ent, ent->poisoner, ent->shocker, true, ent->s.origin);
+				}
+
+				point[0] = random()*10000 - 5000;
+				point[1] = ent->s.origin[1] - 50; 
+				point[2] = random()*10000 - 5000;
+
+				VectorNormalize(point) ;
+
+				gi.WriteByte (svc_temp_entity);
+				gi.WriteByte (TE_SHIELD_SPARKS);
+				gi.WritePosition (ent->s.origin);
+				gi.WriteDir (point);
+				gi.multicast (ent->s.origin, MULTICAST_PVS);
+			}
+
+			VectorCopy(ent->s.origin, ent->previous_pos);
+			shock_cd = 5;
+		}
+
+		ent->shock_time--;
+	}
+
+	//shake status effect
+	if (ent->shake_time > 0)
+	{
+		ent->shake_time--;
 	}
 
 	//ensnare status effect
 	if (ent->ensnare_time > 0)
 	{
-		VectorSet (ent->velocity, 0, 0, 0);
+		client->buttons = 0;
+
+		VectorSet(ent->velocity, 0, 0, 0);
+		VectorCopy(ent->previous_pos, ent->s.origin);
 
 		ent->ensnare_time--;
-	}
-
-	//disarm status effect
-	if (ent->disarm_time > 0)
-	{
-		client->latched_buttons &= ~BUTTON_ATTACK;
-
-		ent->disarm_time--;
 	}
 
 	//check if a player is blocking
 	if (ent->blocking)
 	{
 		client->latched_buttons &= ~BUTTON_ATTACK;
+
 		gi.centerprintf(ent, "Blocking");
 	}
 	else

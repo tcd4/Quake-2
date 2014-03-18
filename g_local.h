@@ -480,6 +480,7 @@ extern	int	body_armor_index;
 #define MOD_HIT				32
 #define MOD_TARGET_BLASTER	33
 #define MOD_POISON			34
+#define MOD_SHOCK			35
 #define MOD_FRIENDLY_FIRE	0x8000000
 
 extern	int	meansOfDeath;
@@ -844,8 +845,6 @@ typedef struct
 	int			game_helpchanged;
 	int			helpchanged;
 
-	int			blocking;
-
 	qboolean	spectator;			// client is a spectator
 } client_persistant_t;
 
@@ -1074,10 +1073,12 @@ struct edict_s
 	//mod variables
 	qboolean	blocking;
 	int			poison_time;
-	int			stun_time;
 	int			ensnare_time;
-	int			disarm_time;
+	int			shock_time;
+	int			shake_time;
 	edict_t		*poisoner;
+	edict_t		*shocker;
+	vec3_t		previous_pos;
 
 	// timing variables
 	float		wait;
