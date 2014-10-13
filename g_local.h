@@ -212,6 +212,10 @@ typedef struct
 #define WEAP_RAILGUN			10
 #define WEAP_BFG				11
 
+// tactics defines
+#define MAX_UNITS				5
+
+
 typedef struct gitem_s
 {
 	char		*classname;	// spawning name
@@ -1091,5 +1095,15 @@ struct edict_s
 	// common data blocks
 	moveinfo_t		moveinfo;
 	monsterinfo_t	monsterinfo;
+
+	// tactics player variables
+	edict_t		*units[ MAX_UNITS ];
+	int			currentUnit;
+	qboolean	myTurn;
+	int			MP;
+	int			AP;
+
+	// tactics unit variables
+	int			thisUnit;
 };
 

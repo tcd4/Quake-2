@@ -1145,7 +1145,7 @@ void PutClientInServer (edict_t *ent)
 	ent->client = &game.clients[index];
 	ent->takedamage = DAMAGE_AIM;
 	ent->movetype = MOVETYPE_WALK;
-	ent->viewheight = 22;
+	ent->viewheight = 25;
 	ent->inuse = true;
 	ent->classname = "player";
 	ent->mass = 200;
@@ -1211,6 +1211,30 @@ void PutClientInServer (edict_t *ent)
 	ent->s.angles[ROLL] = 0;
 	VectorCopy (ent->s.angles, client->ps.viewangles);
 	VectorCopy (ent->s.angles, client->v_angle);
+
+	// spawn player as a spectator in tactics
+	if (coop->value)
+	{
+		client->chase_target = NULL;
+		ent->movetype = MOVETYPE_NOCLIP;
+		ent->solid = SOLID_NOT;
+		ent->svflags |= SVF_NOCLIENT;
+		ent->client->ps.gunindex = 0;
+
+		ent->myTurn = true;
+		ent->currentUnit = 0;
+
+		//initUnit (ent, 0);
+		
+		for (i = 0; i < MAX_UNITS; i++)
+		{
+			initUnit (ent, i);
+		}
+		
+		gi.linkentity (ent);
+
+		return;
+	}
 
 	// spawn a spectator
 	if (client->pers.spectator) {
@@ -1289,7 +1313,7 @@ void ClientBegin (edict_t *ent)
 
 	ent->client = game.clients + (ent - g_edicts - 1);
 
-	if (deathmatch->value)
+	if (deathmatch->value || coop->value)
 	{
 		ClientBeginDeathmatch (ent);
 		return;
@@ -1591,7 +1615,9 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		// set up for pmove
 		memset (&pm, 0, sizeof(pm));
 
-		if (ent->movetype == MOVETYPE_NOCLIP)
+		if (coop->value && ent->myTurn)
+			client->ps.pmove.pm_type = PM_NORMAL;
+		else if (ent->movetype == MOVETYPE_NOCLIP)
 			client->ps.pmove.pm_type = PM_SPECTATOR;
 		else if (ent->s.modelindex != 255)
 			client->ps.pmove.pm_type = PM_GIB;
@@ -1731,6 +1757,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		other = g_edicts + i;
 		if (other->inuse && other->client->chase_target == ent)
 			UpdateChaseCam(other);
+	}
+
+	if (ent->myTurn)
+	{
+		unit_move (ent->units[ ent->currentUnit ]);
 	}
 }
 
