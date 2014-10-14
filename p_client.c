@@ -1825,3 +1825,10 @@ void ClientBeginServerFrame (edict_t *ent)
 
 	client->latched_buttons = 0;
 }
+
+void nextTurn (edict_t *ent)
+{
+	ent->MP = 10000;
+	ent->AP = 1000;
+	ent->myTurn = !ent->myTurn;
+}

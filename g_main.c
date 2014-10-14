@@ -321,6 +321,53 @@ void CheckDMRules (void)
 	}
 }
 
+/*
+=============
+CheckTacticsRules
+=============
+*/
+void CheckTacticsRules (qboolean turnSwitch)
+{
+	int			i;
+	gclient_t	*cl;
+	static int	turnTime;
+	int			timeLeft;
+
+	if (level.intermissiontime)
+		return;
+
+	if (!coop->value)
+		return;
+
+	if (!turnTime)
+	{
+		turnTime = level.time + TURN_TIME_LIMIT;
+		return;
+	}
+
+	timeLeft = turnTime - level.time;
+
+	if (timeLeft <= 0 || turnSwitch)
+	{
+		turnTime = level.time + TURN_TIME_LIMIT;
+		timeLeft = 0;
+	}
+
+	for (i=0 ; i<maxclients->value ; i++)
+	{
+		cl = game.clients + i;
+
+		if (!g_edicts[i+1].inuse)
+			continue;
+
+		gi.centerprintf (&g_edicts[i + 1], "%d seconds left.\n", timeLeft);
+
+		if (timeLeft <= 0)
+		{
+			nextTurn( &g_edicts[i+1] );
+		}
+	}
+}
 
 /*
 =============
@@ -413,6 +460,9 @@ void G_RunFrame (void)
 
 	// see if it is time to end a deathmatch
 	CheckDMRules ();
+
+	// see if it is time to end a turn or game
+	CheckTacticsRules (false);
 
 	// see if needpass needs updated
 	CheckNeedPass ();

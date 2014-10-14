@@ -214,7 +214,7 @@ typedef struct
 
 // tactics defines
 #define MAX_UNITS				5
-
+#define TURN_TIME_LIMIT			60
 
 typedef struct gitem_s
 {

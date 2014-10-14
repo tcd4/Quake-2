@@ -930,8 +930,9 @@ void Cmd_SwitchUnitB_f (edict_t *ent)
 	VectorCopy (ent->units[ ent->currentUnit ]->s.angles,ent->s.angles);
 }
 
-void Cmd_EndTurn_f (edict_t *ent)
+void Cmd_EndTurn_f (void)
 {
+	CheckTacticsRules (true);
 }
 
 /*
@@ -1026,7 +1027,7 @@ void ClientCommand (edict_t *ent)
 	else if (Q_stricmp (cmd, "switchunitb") == 0)
 		Cmd_SwitchUnitB_f (ent);
 	else if (Q_stricmp (cmd, "endturn") == 0)
-		Cmd_EndTurn_f (ent);
+		Cmd_EndTurn_f ();
 	else	// anything that doesn't match a command will be a chat
 		Cmd_Say_f (ent, false, true);
 }
