@@ -1214,6 +1214,7 @@ void PutClientInServer (edict_t *ent)
 	// spawn player as a spectator in tactics
 	if (coop->value)
 	{
+		ent->takedamage = DAMAGE_NO;
 		client->chase_target = NULL;
 		ent->movetype = MOVETYPE_NOCLIP;
 		ent->solid = SOLID_NOT;
@@ -1230,6 +1231,8 @@ void PutClientInServer (edict_t *ent)
 			initUnit (ent, i);
 		}
 		
+		client->resp.score = MAX_UNITS;
+
 		gi.linkentity (ent);
 
 		return;

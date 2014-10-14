@@ -920,7 +920,12 @@ void Cmd_SwitchUnitB_f (edict_t *ent)
 
 		if (!ent->units[ ent->currentUnit ])
 		{
-			return;
+			continue;
+		}
+
+		if (ent->units[ ent->currentUnit ]->deadflag)
+		{
+			continue;
 		}
 
 		break;

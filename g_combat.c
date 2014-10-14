@@ -369,7 +369,7 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 
 	if (coop->value)
 	{
-		unit_damage (targ, damage);
+		unit_damage (targ, attacker, damage);
 		return;
 	}
 

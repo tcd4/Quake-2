@@ -3,7 +3,7 @@
 
 void unit_RunFrames (edict_t *ent, int start, int end)
 {
-	if (ent->s.frame < end)
+	if (ent->s.frame >= start && ent->s.frame <= end)
 	{
 		ent->s.frame++;
 	}
@@ -25,40 +25,65 @@ qboolean unit_stand (edict_t *ent)
 		}
 	}
 
-	unit_RunFrames (ent, FRAME_stand01, FRAME_stand40);
-
 	return true;
 }
 
 void unit_die (edict_t *ent, edict_t *owner)
 {
+	ent->takedamage = DAMAGE_NO;
+	ent->movetype = MOVETYPE_NONE;
+	ent->svflags |= SVF_DEADMONSTER;
+	ent->deadflag = DEAD_DEAD;
+	ent->solid = SOLID_NOT;
+	ent->svflags |= SVF_NOCLIENT;
+
+	gi.sound (owner, CHAN_VOICE, gi.soundindex(va("*death%i.wav", (rand()%4)+1)), 1, ATTN_NORM, 0);
+	
+	gi.linkentity (ent);
+
+	owner->client->resp.score--;
 }
 
-void unit_pain (edict_t *ent)
+void unit_damage (edict_t *ent, edict_t *attacker, int damage)
 {
-	unit_RunFrames (ent, FRAME_pain101, FRAME_pain104);
-}
+	/*
+	if (attacker == ent->owner)
+	{
+		return;
+	}*/
 
-void unit_damage (edict_t *ent, int damage)
-{
+	ent->health = ent->health - damage;
+
+	if (ent->health <= 0)
+	{
+		unit_die (ent, ent->owner);
+		return;
+	}
+
+	gi.sound (ent->owner, CHAN_VOICE, gi.soundindex(va("*pain%i_%i.wav", 50, 1 + (rand()&1))), 1, ATTN_NORM, 0);
 }
 
 void unit_move (edict_t *ent)
 {
-	if (ent->deadflag)
-	{
-		return;
-	}
-
 	VectorCopy (ent->s.old_origin, ent->s.origin);
 	VectorCopy (ent->owner->s.origin, ent->s.origin);
 	VectorCopy (ent->owner->s.angles, ent->s.angles);
 
-	if (!unit_stand (ent))
+	gi.linkentity (ent);
+}
+
+void unit_think (edict_t *ent)
+{
+	if (unit_stand)
 	{
-		ent->owner->MP--;
+		unit_RunFrames (ent, FRAME_stand01, FRAME_stand40);
+	}
+	else
+	{
 		unit_RunFrames (ent, FRAME_run1, FRAME_run6);
 	}
+
+	ent->nextthink = level.time + .1;
 }
 
 void initUnit (edict_t *ent, int i)
@@ -86,6 +111,8 @@ void initUnit (edict_t *ent, int i)
 	ent->units[ i ]->watertype = 0;
 	ent->units[ i ]->flags &= ~FL_NO_KNOCKBACK;
 	ent->units[ i ]->svflags &= ~SVF_DEADMONSTER;
+	ent->units[ i ]->think = unit_think;
+	ent->units[ i ]->nextthink = level.time + .1;
 
 	VectorCopy (mins, ent->units[ i ]->mins);
 	VectorCopy (maxs, ent->units[ i ]->maxs);
