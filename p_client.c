@@ -1233,6 +1233,9 @@ void PutClientInServer (edict_t *ent)
 		
 		client->resp.score = MAX_UNITS;
 
+		ent->MP = 3010;
+		ent->AP = 500;
+
 		gi.linkentity (ent);
 
 		return;
@@ -1249,6 +1252,7 @@ void PutClientInServer (edict_t *ent)
 		ent->svflags |= SVF_NOCLIENT;
 		client->newweapon = client->pers.weapon;
 		ChangeWeapon (ent);
+
 		gi.linkentity (ent);
 		return;
 	} else
@@ -1591,6 +1595,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	edict_t	*other;
 	int		i, j;
 	pmove_t	pm;
+	vec3_t	v;
 
 	level.current_entity = ent;
 	client = ent->client;
@@ -1619,7 +1624,16 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		memset (&pm, 0, sizeof(pm));
 
 		if (coop->value && ent->myTurn)
-			client->ps.pmove.pm_type = PM_NORMAL;
+		{
+			if (ent->MP <= 0)
+			{
+				client->ps.pmove.pm_type = PM_DEAD;
+			}
+			else
+			{
+				client->ps.pmove.pm_type = PM_NORMAL;
+			}
+		}
 		else if (ent->movetype == MOVETYPE_NOCLIP)
 			client->ps.pmove.pm_type = PM_SPECTATOR;
 		else if (ent->s.modelindex != 255)
@@ -1762,9 +1776,25 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			UpdateChaseCam(other);
 	}
 
-	if (ent->myTurn)
+	if (coop->value)
 	{
-		unit_move (ent->units[ ent->currentUnit ]);
+		if (ent->myTurn)
+		{
+			unit_move (ent->units[ ent->currentUnit ]);
+		}
+		
+		ent->health = ent->units[ ent->currentUnit ]->health;
+		
+		VectorSet (v, 0, 0, 0);
+		if (!VectorCompare (ent->velocity, v))
+		{
+			ent->MP--;
+		}
+
+		if (ent->MP <= 0 && ent->AP <= 0)
+		{
+			CheckTacticsRules (true);
+		}
 	}
 }
 

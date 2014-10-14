@@ -15,17 +15,12 @@ void unit_RunFrames (edict_t *ent, int start, int end)
 
 qboolean unit_stand (edict_t *ent)
 {
-	int i;
-
-	for (i = 0; i < 3; i++)
+	if (VectorCompare (ent->s.old_origin, ent->s.origin))
 	{
-		if (ent->s.old_origin[ i ] != ent->s.origin[ i ])
-		{
-			return false;
-		}
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 void unit_die (edict_t *ent, edict_t *owner)
@@ -46,13 +41,12 @@ void unit_die (edict_t *ent, edict_t *owner)
 
 void unit_damage (edict_t *ent, edict_t *attacker, int damage)
 {
-	/*
 	if (attacker == ent->owner)
 	{
 		return;
-	}*/
+	}
 
-	ent->health = ent->health - damage;
+	ent->health -= damage;
 
 	if (ent->health <= 0)
 	{
@@ -65,7 +59,6 @@ void unit_damage (edict_t *ent, edict_t *attacker, int damage)
 
 void unit_move (edict_t *ent)
 {
-	VectorCopy (ent->s.old_origin, ent->s.origin);
 	VectorCopy (ent->owner->s.origin, ent->s.origin);
 	VectorCopy (ent->owner->s.angles, ent->s.angles);
 
@@ -74,7 +67,7 @@ void unit_move (edict_t *ent)
 
 void unit_think (edict_t *ent)
 {
-	if (unit_stand)
+	if (unit_stand (ent))
 	{
 		unit_RunFrames (ent, FRAME_stand01, FRAME_stand40);
 	}
@@ -83,7 +76,7 @@ void unit_think (edict_t *ent)
 		unit_RunFrames (ent, FRAME_run1, FRAME_run6);
 	}
 
-	ent->nextthink = level.time + .1;
+	ent->nextthink = level.time + .01;
 }
 
 void initUnit (edict_t *ent, int i)

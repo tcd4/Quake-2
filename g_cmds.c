@@ -898,6 +898,11 @@ void Cmd_SwitchUnitF_f (edict_t *ent)
 			return;
 		}
 
+		if (ent->units[ ent->currentUnit ]->deadflag)
+		{
+			continue;
+		}
+
 		break;
 	}
 

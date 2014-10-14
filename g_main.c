@@ -332,6 +332,7 @@ void CheckTacticsRules (qboolean turnSwitch)
 	gclient_t	*cl;
 	static int	turnTime;
 	int			timeLeft;
+	qboolean	nextturn;
 
 	if (level.intermissiontime)
 	{
@@ -349,29 +350,38 @@ void CheckTacticsRules (qboolean turnSwitch)
 		return;
 	}
 
+	nextturn = turnSwitch;
+
 	timeLeft = turnTime - level.time;
 
-	if (timeLeft <= 0 || turnSwitch)
+	if (timeLeft <= 0 || nextturn)
 	{
 		turnTime = level.time + TURN_TIME_LIMIT;
-		timeLeft = 0;
+		nextturn = true;
 	}
-
-	//gi.centerprintf (&g_edicts[i + 1], "%d seconds left.\n", timeLeft);
 
 	for (i=0 ; i<maxclients->value ; i++)
 	{
 		cl = game.clients + i;
 
-		if (!g_edicts[i+1].inuse)
+		if (!g_edicts[i + 1].inuse)
 		{
 			continue;
 		}
 
-		if (timeLeft <= 0)
+		if (cl->resp.score <= 0)
+		{
+			gi.centerprintf (PRINT_HIGH, "%s has lost.\n", cl->pers.netname);
+			EndDMLevel ();
+			return;
+		}
+		
+		if (nextturn)
 		{
 			nextTurn( &g_edicts[i+1] );
 		}
+		
+		gi.centerprintf (&g_edicts[i + 1], "%d seconds left.\nMove Points: %d  Attack Points:%d\n", timeLeft, g_edicts[i + 1].MP, g_edicts[i + 1].AP);
 	}
 }
 

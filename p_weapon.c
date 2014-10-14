@@ -364,7 +364,7 @@ void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 
 	if (coop->value)
 	{
-		if (!ent->myTurn)
+		if (!ent->myTurn || ent->AP <= 0)
 		{
 			return;
 		}
@@ -843,6 +843,11 @@ void Weapon_Blaster_Fire (edict_t *ent)
 		damage = 10;
 	Blaster_Fire (ent, vec3_origin, damage, false, EF_BLASTER);
 	ent->client->ps.gunframe++;
+
+	if (coop->value)
+	{
+		ent->AP -= 75;
+	}
 }
 
 void Weapon_Blaster (edict_t *ent)
