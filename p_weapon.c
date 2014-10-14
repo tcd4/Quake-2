@@ -364,11 +364,10 @@ void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 
 	if (coop->value)
 	{
-		if (ent->myTurn)
+		if (!ent->myTurn)
 		{
-			unit_fire (ent->units[ ent->currentUnit ]);
+			return;
 		}
-		return;
 	}
 
 	if(ent->deadflag || ent->s.modelindex != 255) // VWep animations screw up corpses

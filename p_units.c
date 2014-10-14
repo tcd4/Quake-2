@@ -20,7 +20,9 @@ qboolean unit_stand (edict_t *ent)
 	for (i = 0; i < 3; i++)
 	{
 		if (ent->s.old_origin[ i ] != ent->s.origin[ i ])
+		{
 			return false;
+		}
 	}
 
 	unit_RunFrames (ent, FRAME_stand01, FRAME_stand40);
@@ -28,24 +30,26 @@ qboolean unit_stand (edict_t *ent)
 	return true;
 }
 
-void unit_die (edict_t *ent, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
+void unit_die (edict_t *ent, edict_t *owner)
 {
-	gi.sound (ent, CHAN_BODY, gi.soundindex ("players/male/death1.wav"), 1, ATTN_NORM, 0);
-	G_FreeEdict (ent);
-	ent->owner->units[ ent->thisUnit ] = NULL;
 }
 
-void unit_pain (edict_t *ent, edict_t *other, float kick, int damage)
+void unit_pain (edict_t *ent)
 {
 	unit_RunFrames (ent, FRAME_pain101, FRAME_pain104);
 }
 
-void unit_fire (edict_t *ent)
+void unit_damage (edict_t *ent, int damage)
 {
 }
 
 void unit_move (edict_t *ent)
 {
+	if (ent->deadflag)
+	{
+		return;
+	}
+
 	VectorCopy (ent->s.old_origin, ent->s.origin);
 	VectorCopy (ent->owner->s.origin, ent->s.origin);
 	VectorCopy (ent->owner->s.angles, ent->s.angles);
@@ -68,6 +72,7 @@ void initUnit (edict_t *ent, int i)
 
 	ent->units[ i ]->classname = "playerunit";
 	ent->units[ i ]->owner = ent;
+	ent->units[ i ]->health = 100;
 	ent->units[ i ]->takedamage = DAMAGE_AIM;
 	ent->units[ i ]->movetype = MOVETYPE_STEP;
 	ent->units[ i ]->viewheight = 22;
@@ -77,8 +82,6 @@ void initUnit (edict_t *ent, int i)
 	ent->units[ i ]->deadflag = DEAD_NO;
 	ent->units[ i ]->clipmask = MASK_PLAYERSOLID;
 	ent->units[ i ]->model = "players/male/tris.md2";
-	ent->units[ i ]->pain = unit_pain;
-	ent->units[ i ]->die = unit_die;
 	ent->units[ i ]->waterlevel = 0;
 	ent->units[ i ]->watertype = 0;
 	ent->units[ i ]->flags &= ~FL_NO_KNOCKBACK;

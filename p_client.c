@@ -162,7 +162,6 @@ void player_pain (edict_t *self, edict_t *other, float kick, int damage)
 	// player pain is handled at the end of the frame in P_DamageFeedback
 }
 
-
 qboolean IsFemale (edict_t *ent)
 {
 	char		*info;
@@ -1245,7 +1244,8 @@ void PutClientInServer (edict_t *ent)
 		ent->movetype = MOVETYPE_NOCLIP;
 		ent->solid = SOLID_NOT;
 		ent->svflags |= SVF_NOCLIENT;
-		ent->client->ps.gunindex = 0;
+		client->newweapon = client->pers.weapon;
+		ChangeWeapon (ent);
 		gi.linkentity (ent);
 		return;
 	} else

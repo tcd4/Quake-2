@@ -334,10 +334,14 @@ void CheckTacticsRules (qboolean turnSwitch)
 	int			timeLeft;
 
 	if (level.intermissiontime)
+	{
 		return;
+	}
 
 	if (!coop->value)
+	{
 		return;
+	}
 
 	if (!turnTime)
 	{
@@ -353,14 +357,16 @@ void CheckTacticsRules (qboolean turnSwitch)
 		timeLeft = 0;
 	}
 
+	//gi.centerprintf (&g_edicts[i + 1], "%d seconds left.\n", timeLeft);
+
 	for (i=0 ; i<maxclients->value ; i++)
 	{
 		cl = game.clients + i;
 
 		if (!g_edicts[i+1].inuse)
+		{
 			continue;
-
-		gi.centerprintf (&g_edicts[i + 1], "%d seconds left.\n", timeLeft);
+		}
 
 		if (timeLeft <= 0)
 		{

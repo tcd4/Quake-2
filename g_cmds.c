@@ -882,8 +882,8 @@ void Cmd_PlayerList_f(edict_t *ent)
 
 void Cmd_SwitchUnitF_f (edict_t *ent)
 {
-	//if (!ent->myTurn)
-	//	return;
+	if (!ent->myTurn)
+		return;
 	 
 	while (1)
 	{
@@ -893,9 +893,9 @@ void Cmd_SwitchUnitF_f (edict_t *ent)
 			ent->currentUnit = 0;
 		}
 
-		if ((!ent->units[ ent->currentUnit ]) || (ent->units[ ent->currentUnit ]->deadflag))
+		if (!ent->units[ ent->currentUnit ])
 		{
-			continue;
+			return;
 		}
 
 		break;
@@ -909,25 +909,25 @@ void Cmd_SwitchUnitB_f (edict_t *ent)
 {
 	if (!ent->myTurn)
 		return;
-
+	 
 	while (1)
 	{
 		ent->currentUnit--;
-		if (ent->currentUnit <= 0)
+		if (ent->currentUnit < 0)
 		{
 			ent->currentUnit = MAX_UNITS - 1;
 		}
 
-		if ((!ent->units[ ent->currentUnit ]) || (ent->units[ ent->currentUnit ]->deadflag))
+		if (!ent->units[ ent->currentUnit ])
 		{
-			continue;
+			return;
 		}
 
 		break;
 	}
 
 	VectorCopy (ent->units[ ent->currentUnit ]->s.origin, ent->s.origin);
-	VectorCopy (ent->units[ ent->currentUnit ]->s.angles,ent->s.angles);
+	VectorCopy (ent->units[ ent->currentUnit ]->s.angles, ent->s.angles);
 }
 
 void Cmd_EndTurn_f (void)
