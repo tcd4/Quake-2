@@ -808,40 +808,17 @@ edict_t *SelectDeathmatchSpawnPoint (void)
 }
 
 
-edict_t *SelectCoopSpawnPoint (edict_t *ent)
+void SelectCoopSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles)
 {
-	int		index;
-	edict_t	*spot = NULL;
-	char	*target;
-
-	index = ent->client - game.clients;
-
-	// player 0 starts in normal player spawn point
-	if (!index)
-		return NULL;
-
-	spot = NULL;
-
-	// assume there are four coop spots at each spawnpoint
-	while (1)
+	VectorSet (angles, 0, 0, 0);
+	if (ent->playerNum != 1)
 	{
-		spot = G_Find (spot, FOFS(classname), "info_player_coop");
-		if (!spot)
-			return NULL;	// we didn't have enough...
-
-		target = spot->targetname;
-		if (!target)
-			target = "";
-		if ( Q_stricmp(game.spawnpoint, target) == 0 )
-		{	// this is a coop spawn point for one of the clients here
-			index--;
-			if (!index)
-				return spot;		// this is it
-		}
+		VectorSet (origin, 1272, 658, 352);
 	}
-
-
-	return spot;
+	else
+	{
+		VectorSet (origin, 874, 1491, 792);
+	}
 }
 
 
@@ -859,7 +836,10 @@ void	SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles)
 	if (deathmatch->value)
 		spot = SelectDeathmatchSpawnPoint ();
 	else if (coop->value)
-		spot = SelectCoopSpawnPoint (ent);
+	{
+		SelectCoopSpawnPoint (ent, origin, angles);
+		return;
+	}
 
 	// find a single player start spot
 	if (!spot)
@@ -1085,13 +1065,23 @@ void PutClientInServer (edict_t *ent)
 	client_persistant_t	saved;
 	client_respawn_t	resp;
 
+	index = ent-g_edicts-1;
+	client = ent->client;
+
+	if (coop->value)
+	{
+		numPlayers++;
+		ent->playerNum = numPlayers;
+
+		if (numPlayers > 2)
+		{
+			client->pers.spectator = true;
+		}
+	}
 	// find a spawn point
 	// do it before setting health back up, so farthest
 	// ranging doesn't count this client
 	SelectSpawnPoint (ent, spawn_origin, spawn_angles);
-
-	index = ent-g_edicts-1;
-	client = ent->client;
 
 	// deathmatch wipes most client data every spawn
 	if (deathmatch->value)
@@ -1211,8 +1201,8 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (ent->s.angles, client->ps.viewangles);
 	VectorCopy (ent->s.angles, client->v_angle);
 
-	// spawn player as a spectator in tactics
-	if (coop->value)
+	// spawn player in tactics
+	if (coop->value && !client->pers.spectator)
 	{
 		ent->takedamage = DAMAGE_NO;
 		client->chase_target = NULL;
@@ -1221,14 +1211,21 @@ void PutClientInServer (edict_t *ent)
 		ent->svflags |= SVF_NOCLIENT;
 		ent->client->ps.gunindex = 0;
 
-		ent->myTurn = true;
+		if (numPlayers != 1)
+		{
+			ent->myTurn = false;
+		}
+		else
+		{
+			ent->myTurn = true;
+		}
 		ent->currentUnit = 0;
 
 		//initUnit (ent, 0);
 		
 		for (i = 0; i < MAX_UNITS; i++)
 		{
-			initUnit (ent, i);
+			initUnit (ent, i, spawn_origin, spawn_angles);
 		}
 		
 		client->resp.score = MAX_UNITS;
@@ -1861,7 +1858,7 @@ void ClientBeginServerFrame (edict_t *ent)
 
 void nextTurn (edict_t *ent)
 {
-	ent->MP = 10000;
-	ent->AP = 1000;
+	ent->MP = 5000;
+	ent->AP = 500;
 	ent->myTurn = !ent->myTurn;
 }

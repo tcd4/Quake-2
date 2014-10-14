@@ -1,6 +1,30 @@
 #include "g_local.h"
 #include "m_player.h"
 
+void unit_NextUnit (edict_t *ent)
+{
+	while (1)
+	{
+		ent->currentUnit++;
+		if (ent->currentUnit >= MAX_UNITS)
+		{
+			ent->currentUnit = 0;
+		}
+
+		if (!ent->units[ ent->currentUnit ])
+		{
+			return;
+		}
+
+		if (ent->units[ ent->currentUnit ]->deadflag)
+		{
+			continue;
+		}
+
+		break;
+	}
+}
+
 void unit_RunFrames (edict_t *ent, int start, int end)
 {
 	if (ent->s.frame >= start && ent->s.frame <= end)
@@ -37,6 +61,10 @@ void unit_die (edict_t *ent, edict_t *owner)
 	gi.linkentity (ent);
 
 	owner->client->resp.score--;
+	if (owner->currentUnit == ent->thisUnit)
+	{
+		unit_NextUnit (owner);
+	}
 }
 
 void unit_damage (edict_t *ent, edict_t *attacker, int damage)
@@ -79,15 +107,12 @@ void unit_think (edict_t *ent)
 	ent->nextthink = level.time + .01;
 }
 
-void initUnit (edict_t *ent, int i)
+void initUnit (edict_t *ent, int i, vec3_t	spawn_origin, vec3_t spawn_angles)
 {
-	vec3_t	spawn_origin, spawn_angles;
 	vec3_t	mins = {-16, -16, -24};
 	vec3_t	maxs = {16, 16, 32};
 
 	ent->units[ i ] = G_Spawn ();
-	SelectSpawnPoint (ent, spawn_origin, spawn_angles);
-
 	ent->units[ i ]->classname = "playerunit";
 	ent->units[ i ]->owner = ent;
 	ent->units[ i ]->health = 100;

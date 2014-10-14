@@ -212,9 +212,10 @@ typedef struct
 #define WEAP_RAILGUN			10
 #define WEAP_BFG				11
 
-// tactics defines
+// tactics defines/externs
 #define MAX_UNITS				5
 #define TURN_TIME_LIMIT			60
+extern int	numPlayers;
 
 typedef struct gitem_s
 {
@@ -1099,6 +1100,7 @@ struct edict_s
 	// tactics player variables
 	edict_t		*units[ MAX_UNITS ];
 	int			currentUnit;
+	int			playerNum;
 	qboolean	myTurn;
 	int			MP;
 	int			AP;

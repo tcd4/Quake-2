@@ -10,6 +10,7 @@ spawn_temp_t	st;
 int	sm_meat_index;
 int	snd_fry;
 int meansOfDeath;
+int numPlayers;
 
 edict_t		*g_edicts;
 
@@ -250,6 +251,10 @@ void EndDMLevel (void)
 	}
 }
 
+void EndTacticsLevel (void)
+{
+	EndDMLevel ();
+}
 
 /*
 =================
@@ -314,7 +319,7 @@ void CheckDMRules (void)
 			if (cl->resp.score >= fraglimit->value)
 			{
 				gi.bprintf (PRINT_HIGH, "Fraglimit hit.\n");
-				EndDMLevel ();
+				EndTacticsLevel ();
 				return;
 			}
 		}
@@ -347,6 +352,7 @@ void CheckTacticsRules (qboolean turnSwitch)
 	if (!turnTime)
 	{
 		turnTime = level.time + TURN_TIME_LIMIT;
+		numPlayers = 0;
 		return;
 	}
 
@@ -371,7 +377,7 @@ void CheckTacticsRules (qboolean turnSwitch)
 
 		if (cl->resp.score <= 0)
 		{
-			gi.centerprintf (PRINT_HIGH, "%s has lost.\n", cl->pers.netname);
+			gi.centerprintf (&g_edicts[i + 1], "%s has lost.\n", cl->pers.netname);
 			EndDMLevel ();
 			return;
 		}
@@ -381,7 +387,14 @@ void CheckTacticsRules (qboolean turnSwitch)
 			nextTurn( &g_edicts[i+1] );
 		}
 		
-		gi.centerprintf (&g_edicts[i + 1], "%d seconds left.\nMove Points: %d  Attack Points:%d\n", timeLeft, g_edicts[i + 1].MP, g_edicts[i + 1].AP);
+		if (g_edicts[i + 1].myTurn)
+		{
+			gi.centerprintf (&g_edicts[i + 1], "%d seconds left in your turn.\nMove Points: %d  Attack Points:%d\n", timeLeft, g_edicts[i + 1].MP, g_edicts[i + 1].AP);
+		}
+		else
+		{
+			gi.centerprintf (&g_edicts[i + 1], "%d seconds left in the enemy's turn.\n", timeLeft);
+		}
 	}
 }
 
