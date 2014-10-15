@@ -880,47 +880,46 @@ void Cmd_PlayerList_f(edict_t *ent)
 	gi.cprintf(ent, PRINT_HIGH, "%s", text);
 }
 
+/*
+=================
+Cmd_SwitchUnitF_f
+move forwards through player units
+=================
+*/
 void Cmd_SwitchUnitF_f (edict_t *ent)
 {
 	if (!ent->myTurn)
 		return;
 	 
-	unit_NextUnit (ent);
+	unit_NextUnit (ent, true);
 
 	VectorCopy (ent->units[ ent->currentUnit ]->s.origin, ent->s.origin);
 	VectorCopy (ent->units[ ent->currentUnit ]->s.angles, ent->s.angles);
 }
 
+/*
+=================
+Cmd_SwitchUnitB_f
+move backwards through player units
+=================
+*/
 void Cmd_SwitchUnitB_f (edict_t *ent)
 {
 	if (!ent->myTurn)
 		return;
 	 
-	while (1)
-	{
-		ent->currentUnit--;
-		if (ent->currentUnit < 0)
-		{
-			ent->currentUnit = MAX_UNITS - 1;
-		}
-
-		if (!ent->units[ ent->currentUnit ])
-		{
-			continue;
-		}
-
-		if (ent->units[ ent->currentUnit ]->deadflag)
-		{
-			continue;
-		}
-
-		break;
-	}
+	unit_NextUnit (ent, false);
 
 	VectorCopy (ent->units[ ent->currentUnit ]->s.origin, ent->s.origin);
 	VectorCopy (ent->units[ ent->currentUnit ]->s.angles, ent->s.angles);
 }
 
+/*
+=================
+Cmd_EndTurn_f
+ends a player's turn
+=================
+*/
 void Cmd_EndTurn_f (edict_t *ent)
 {
 	if (!ent->myTurn)

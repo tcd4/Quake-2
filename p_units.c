@@ -1,21 +1,50 @@
 #include "g_local.h"
 #include "m_player.h"
 
-void unit_NextUnit (edict_t *ent)
+/*
+===========
+unit_NextUnit
+switches player's current unit
+============
+*/
+void unit_NextUnit (edict_t *ent, qboolean forward)
 {
+	int cUnit = ent->currentUnit;
+
 	while (1)
 	{
-		ent->currentUnit++;
+		if (forward)
+		{
+			ent->currentUnit++;
+		}
+		else
+		{
+			ent->currentUnit--;
+		}
+
+		//check if all units are unavailible
+		if (cUnit == ent->currentUnit)
+		{
+			break;
+		}
+
 		if (ent->currentUnit >= MAX_UNITS)
 		{
 			ent->currentUnit = 0;
 		}
 
+		if (ent->currentUnit < 0)
+		{
+			ent->currentUnit = MAX_UNITS - 1;
+		}
+
+		//check if unit doesn't exist
 		if (!ent->units[ ent->currentUnit ])
 		{
 			return;
 		}
 
+		//check if unit is dead
 		if (ent->units[ ent->currentUnit ]->deadflag)
 		{
 			continue;
@@ -25,6 +54,12 @@ void unit_NextUnit (edict_t *ent)
 	}
 }
 
+/*
+===========
+unit_RunFrames
+animation control
+============
+*/
 void unit_RunFrames (edict_t *ent, int start, int end)
 {
 	if (ent->s.frame >= start && ent->s.frame <= end)
@@ -37,6 +72,12 @@ void unit_RunFrames (edict_t *ent, int start, int end)
 	}
 }
 
+/*
+===========
+unit_stand
+checks if unit is standing or moving
+============
+*/
 qboolean unit_stand (edict_t *ent)
 {
 	if (VectorCompare (ent->s.old_origin, ent->s.origin))
@@ -47,6 +88,11 @@ qboolean unit_stand (edict_t *ent)
 	return false;
 }
 
+/*
+===========
+unit_die
+============
+*/
 void unit_die (edict_t *ent, edict_t *owner)
 {
 	ent->takedamage = DAMAGE_NO;
@@ -61,14 +107,21 @@ void unit_die (edict_t *ent, edict_t *owner)
 	gi.linkentity (ent);
 
 	owner->client->resp.score--;
+
 	if (owner->currentUnit == ent->thisUnit)
 	{
-		unit_NextUnit (owner);
+		unit_NextUnit (owner, true);
 	}
 }
 
+/*
+===========
+unit_damage
+============
+*/
 void unit_damage (edict_t *ent, edict_t *attacker, int damage)
 {
+	//friendly fire off
 	if (attacker == ent->owner)
 	{
 		return;
@@ -85,6 +138,11 @@ void unit_damage (edict_t *ent, edict_t *attacker, int damage)
 	gi.sound (ent->owner, CHAN_VOICE, gi.soundindex(va("*pain%i_%i.wav", 50, 1 + (rand()&1))), 1, ATTN_NORM, 0);
 }
 
+/*
+===========
+unit_move
+============
+*/
 void unit_move (edict_t *ent)
 {
 	VectorCopy (ent->owner->s.origin, ent->s.origin);
@@ -93,6 +151,11 @@ void unit_move (edict_t *ent)
 	gi.linkentity (ent);
 }
 
+/*
+===========
+unit_think
+============
+*/
 void unit_think (edict_t *ent)
 {
 	if (unit_stand (ent))
@@ -107,6 +170,12 @@ void unit_think (edict_t *ent)
 	ent->nextthink = level.time + .01;
 }
 
+/*
+===========
+initUnit
+initializes units
+============
+*/
 void initUnit (edict_t *ent, int i, vec3_t	spawn_origin, vec3_t spawn_angles)
 {
 	vec3_t	mins = {-16, -16, -24};
@@ -144,6 +213,7 @@ void initUnit (edict_t *ent, int i, vec3_t	spawn_origin, vec3_t spawn_angles)
 	ent->s.frame = 0;
 	VectorCopy (spawn_origin, ent->units[ i ]->s.origin);
 	ent->units[ i ]->s.origin[ 2 ] += 1;
+	ent->units[ i ]->s.origin[ 0 ] += (i * 25);
 	VectorCopy (ent->units[ i ]->s.origin, ent->units[ i ]->s.old_origin);
 
 	ent->units[ i ]->s.angles[ YAW ] = spawn_angles[ YAW ];

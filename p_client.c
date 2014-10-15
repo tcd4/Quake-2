@@ -1068,6 +1068,7 @@ void PutClientInServer (edict_t *ent)
 	index = ent-g_edicts-1;
 	client = ent->client;
 
+	//preliminary variable set ups for tactics
 	if (coop->value)
 	{
 		numPlayers++;
@@ -1078,6 +1079,7 @@ void PutClientInServer (edict_t *ent)
 			client->pers.spectator = true;
 		}
 	}
+
 	// find a spawn point
 	// do it before setting health back up, so farthest
 	// ranging doesn't count this client
@@ -1220,11 +1222,15 @@ void PutClientInServer (edict_t *ent)
 			ent->myTurn = true;
 		}
 		ent->currentUnit = 0;
-
-		//initUnit (ent, 0);
 		
 		for (i = 0; i < MAX_UNITS; i++)
 		{
+			if (ent->units[ i ])
+			{
+				G_FreeEdict (ent->units[ i ]);
+				ent->units[ i ] = NULL;
+			}
+
 			initUnit (ent, i, spawn_origin, spawn_angles);
 		}
 		
@@ -1773,8 +1779,10 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			UpdateChaseCam(other);
 	}
 
+	// tactics thoughts
 	if (coop->value)
 	{
+		// move the unit
 		if (ent->myTurn)
 		{
 			unit_move (ent->units[ ent->currentUnit ]);
@@ -1782,12 +1790,14 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		
 		ent->health = ent->units[ ent->currentUnit ]->health;
 		
+		// reduce MP if moved
 		VectorSet (v, 0, 0, 0);
 		if (!VectorCompare (ent->velocity, v))
 		{
 			ent->MP--;
 		}
 
+		// end turn automatically if the player can't move or attack
 		if (ent->MP <= 0 && ent->AP <= 0)
 		{
 			CheckTacticsRules (true);

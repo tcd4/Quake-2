@@ -251,8 +251,27 @@ void EndDMLevel (void)
 	}
 }
 
-void EndTacticsLevel (void)
+/*
+=================
+EndTacticsLevel
+=================
+*/
+void EndTacticsLevel (char name[])
 {
+	int			i;
+	gclient_t	*cl;
+
+	for (i = 0; i < maxclients->value; i++)
+	{
+		cl = game.clients + i;
+		if (!g_edicts[i + 1].inuse)
+		{
+				continue;
+		}
+
+		gi.centerprintf (&g_edicts[i + 1], "%s has lost.\n", name);
+	}
+	
 	EndDMLevel ();
 }
 
@@ -319,7 +338,7 @@ void CheckDMRules (void)
 			if (cl->resp.score >= fraglimit->value)
 			{
 				gi.bprintf (PRINT_HIGH, "Fraglimit hit.\n");
-				EndTacticsLevel ();
+				EndDMLevel ();
 				return;
 			}
 		}
@@ -349,6 +368,7 @@ void CheckTacticsRules (qboolean turnSwitch)
 		return;
 	}
 
+	//initialize gamemode
 	if (!turnTime)
 	{
 		turnTime = level.time + TURN_TIME_LIMIT;
@@ -360,6 +380,7 @@ void CheckTacticsRules (qboolean turnSwitch)
 
 	timeLeft = turnTime - level.time;
 
+	//check to see if the turn time is over the limit
 	if (timeLeft <= 0 || nextturn)
 	{
 		turnTime = level.time + TURN_TIME_LIMIT;
@@ -375,18 +396,20 @@ void CheckTacticsRules (qboolean turnSwitch)
 			continue;
 		}
 
+		//check if there's a winner
 		if (cl->resp.score <= 0)
 		{
-			gi.centerprintf (&g_edicts[i + 1], "%s has lost.\n", cl->pers.netname);
-			EndDMLevel ();
+			EndTacticsLevel (g_edicts[i + 1].client->pers.netname);
 			return;
 		}
 		
+		//changes turns
 		if (nextturn)
 		{
 			nextTurn( &g_edicts[i+1] );
 		}
 		
+		//prints out turn notifications
 		if (g_edicts[i + 1].myTurn)
 		{
 			gi.centerprintf (&g_edicts[i + 1], "%d seconds left in your turn.\nMove Points: %d  Attack Points:%d\n", timeLeft, g_edicts[i + 1].MP, g_edicts[i + 1].AP);

@@ -362,6 +362,7 @@ void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 {
 	int		n;
 
+	//players can only fire on his/her turn with AP > 0 in tactics
 	if (coop->value)
 	{
 		if (!ent->myTurn || ent->AP <= 0)
