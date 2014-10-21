@@ -15,3 +15,4 @@ Quake 2 modifications Tactics Branch
 	-players can end the turn automatically with the "endturn" command (bound to "ENTER" in my config file)
 	-player scores will reflect how many units they have alive
 		-when a player's score hits 0, the player loses
+	-can only play on the map, The Edge, because I forgot that there are other maps
