@@ -1,6 +1,7 @@
 Quake 2 modifications Tactics Branch
 
 -turned Quake 2 into a turn-based strategy game
+	-requires coop to be on
 	-can only be 1v1
 		-all other players will be spectators
 	-each player starts with 5 units
